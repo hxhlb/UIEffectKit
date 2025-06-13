@@ -10,14 +10,21 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         NavigationStack {
-            List {
-                NavigationLink {
-                    SimpleController<ParticleTransitionController>()
-                        .navigationTitle("ParticleTransition")
-                } label: {
-                    Label("ParticleTransition", systemImage: "wind")
+            ScrollView {
+                VStack(alignment: .leading) {
+                    NavigationLink {
+                        SimpleController<ParticleTransitionController>()
+                            .navigationTitle("ParticleTransition")
+                    } label: {
+                        Label("ParticleTransition", systemImage: "wind")
+                    }
+
+                    Divider().hidden()
                 }
+                .padding()
             }
+            // avoid problem on Mac
+            .toolbar { Button("") {}.hidden() }
             .navigationTitle("UIEffectKit")
         }
     }

@@ -32,7 +32,12 @@ import UIEffectKit
         }
 
         @objc func explode() {
-            imageView.removeFromSuperviewWithExplodeEffect()
+            if imageView.superview != nil {
+                imageView.removeFromSuperviewWithExplodeEffect()
+            } else {
+                view.addSubview(imageView)
+                view.setNeedsLayout()
+            }
         }
     }
 
@@ -59,7 +64,12 @@ import UIEffectKit
         }
 
         @objc private func explode() {
-            imageView.removeFromSuperviewWithExplodeEffect()
+            if imageView.superview != nil {
+                imageView.removeFromSuperviewWithExplodeEffect()
+            } else {
+                view.addSubview(imageView)
+                view.needsLayout = true
+            }
         }
     }
 #endif
