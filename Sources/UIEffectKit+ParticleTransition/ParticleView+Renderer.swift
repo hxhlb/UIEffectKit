@@ -128,7 +128,7 @@ extension ParticleView {
 
         private func updateParticles() {
             let maxThreadsPerThreadgroup = computePipeline.maxTotalThreadsPerThreadgroup
-            let threadgroupSize = min(maxThreadsPerThreadgroup, 256)
+            let threadgroupSize = min(maxThreadsPerThreadgroup, 2048)
             let threadgroupCount = (particleCount + threadgroupSize - 1) / threadgroupSize
 
             let computeCommandBuffer = commandQueue.makeCommandBuffer()!
@@ -247,6 +247,11 @@ extension ParticleView.Renderer {
         let targetFrameWidth = Float(targetFrame.width)
         let particleStep = 1
 
+        let estimatedParticleCount = 1
+            * Int(targetFrameWidth / Float(particleStep))
+            * Int(targetFrameHeight / Float(particleStep))
+        particles.reserveCapacity(estimatedParticleCount)
+        
         for y in stride(from: 0, to: Int(targetFrameHeight), by: particleStep) {
             for x in stride(from: 0, to: Int(targetFrameWidth), by: particleStep) {
                 let particle = createParticle(x: x, y: y, step: particleStep)
@@ -274,7 +279,7 @@ extension ParticleView.Renderer {
             position: .init(initialX, initialY),
             velocity: .init(
                 cos(Float.random(in: 0 ... (2 * Float.pi))) * Float.random(in: 1 ... 4),
-                sin(Float.random(in: 0 ... (2 * Float.pi))) * Float.random(in: 1 ... 4)
+                sin(Float.random(in: 0 ... (2 * Float.pi))) * Float.random(in: 1 ... 4) - 2.5
             ),
             life: simd_float1(particleDuration),
             duration: simd_float1(particleDuration)

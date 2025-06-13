@@ -29,7 +29,6 @@ import UIEffectKitBase
 
             insertParticleViewInSuperview(particleView, superview: superview)
             configureParticleView(particleView, frameInSuperview: frameInSuperview)
-
             startParticleAnimation(particleView, cgImage: cgImage, frameInSuperview: frameInSuperview)
         }
 
@@ -53,7 +52,9 @@ import UIEffectKitBase
             particleView.beginWith(cgImage, targetFrame: frameInSuperview, onComplete: {
                 particleView.removeFromSuperview()
             }, onFirstFrameRendered: { [weak self] in
-                self?.removeFromSuperview()
+                DispatchQueue.main.async {
+                    self?.removeFromSuperview()
+                }
             })
         }
     }
@@ -100,7 +101,9 @@ import UIEffectKitBase
             particleView.beginWith(cgImage, targetFrame: frameInSuperview, onComplete: {
                 particleView.removeFromSuperview()
             }, onFirstFrameRendered: { [weak self] in
-                self?.removeFromSuperview()
+                DispatchQueue.main.async {
+                    self?.removeFromSuperview()
+                }
             })
         }
     }

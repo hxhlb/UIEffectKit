@@ -81,7 +81,7 @@ kernel void PTS_UpdateParticles(device ParticleTransitionSystem::TrollParticle *
         particles[index].velocity.y *= 0.99;
 
         // 模拟重力影响，增加 y 分量
-        particles[index].velocity.y += 0.05;
+        particles[index].velocity.y += 0.1;
     }
     particles[index].life -= 1.0;
 }
