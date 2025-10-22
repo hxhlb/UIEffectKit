@@ -45,6 +45,7 @@ extension ShimmeringBackgroundView {
 
         func updateDrawableSize(_ size: CGSize) {
             drawableSize = .init(Float(size.width), Float(size.height))
+            lastFrameTimestamp = nil
             regenerateParticles()
         }
 
@@ -171,10 +172,9 @@ extension ShimmeringBackgroundView {
             }
             lastFrameTimestamp = now
 
-            // compute step
-            if let computeCommandBuffer = commandQueue.makeCommandBuffer(),
-               let computeEncoder = computeCommandBuffer.makeComputeCommandEncoder()
-            {
+            guard let commandBuffer = commandQueue.makeCommandBuffer() else { return }
+
+            if let computeEncoder = commandBuffer.makeComputeCommandEncoder() {
                 computeEncoder.setComputePipelineState(computePipeline)
                 computeEncoder.setBuffer(particleBuffer, offset: 0, index: 0)
                 var count = UInt32(particleCount)
@@ -187,11 +187,7 @@ extension ShimmeringBackgroundView {
                 let threadsPerGroup = MTLSize(width: threadExecutionWidth, height: 1, depth: 1)
                 computeEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup: threadsPerGroup)
                 computeEncoder.endEncoding()
-                computeCommandBuffer.commit()
             }
-
-            // render step
-            guard let commandBuffer = commandQueue.makeCommandBuffer() else { return }
 
             renderPassDescriptor.colorAttachments[0].loadAction = .clear
             renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 0)

@@ -1,5 +1,5 @@
 //
-//  UIEffectKitExampleApp.swift
+//  main.swift
 //  UIEffectKitExample
 //
 //  Created by 秋星桥 on 6/13/25.
