@@ -32,8 +32,8 @@ extension ShimmeringBackgroundView {
         private var particleBuffer: MTLBuffer?
         private var particleCount: Int = 0
         private var drawableSize: simd_float2 = .zero
-    private var elapsedTime: Float = 0
-    private var lastFrameTimestamp: CFTimeInterval?
+        private var elapsedTime: Float = 0
+        private var lastFrameTimestamp: CFTimeInterval?
 
         func setup(with device: MTLDevice) {
             self.device = device
@@ -177,8 +177,10 @@ extension ShimmeringBackgroundView {
             {
                 computeEncoder.setComputePipelineState(computePipeline)
                 computeEncoder.setBuffer(particleBuffer, offset: 0, index: 0)
+                var count = UInt32(particleCount)
                 computeEncoder.setBytes(&drawableSize, length: MemoryLayout<simd_float2>.stride, index: 1)
                 computeEncoder.setBytes(&elapsedTime, length: MemoryLayout<Float>.stride, index: 2)
+                computeEncoder.setBytes(&count, length: MemoryLayout<UInt32>.stride, index: 3)
 
                 let threadExecutionWidth = computePipeline.threadExecutionWidth
                 let threadgroups = MTLSize(width: (particleCount + threadExecutionWidth - 1) / threadExecutionWidth, height: 1, depth: 1)

@@ -21,12 +21,13 @@ public final class ShimmeringBackgroundView: EffectKitView {
     private let renderer = Renderer()
 
     #if canImport(UIKit)
-        public override init(frame: CGRect) {
+        override public init(frame: CGRect) {
             super.init(frame: frame)
             commonInit()
         }
+
     #elseif canImport(AppKit)
-        public override init(frame frameRect: NSRect) {
+        override public init(frame frameRect: NSRect) {
             super.init(frame: frameRect)
             commonInit()
         }
@@ -109,12 +110,13 @@ public final class ShimmeringBackgroundView: EffectKitView {
     }
 
     #if canImport(UIKit)
-        public override func layoutSubviews() {
+        override public func layoutSubviews() {
             super.layoutSubviews()
             updateMetalViewLayout(for: bounds)
         }
+
     #elseif canImport(AppKit)
-        public override func layout() {
+        override public func layout() {
             super.layout()
             updateMetalViewLayout(for: bounds)
         }
