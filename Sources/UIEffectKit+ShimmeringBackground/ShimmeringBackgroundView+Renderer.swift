@@ -69,7 +69,7 @@ extension ShimmeringBackgroundView {
             descriptor.colorAttachments[0].alphaBlendOperation = .add
             descriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
             descriptor.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
-            descriptor.colorAttachments[0].sourceAlphaBlendFactor = .one
+            descriptor.colorAttachments[0].sourceAlphaBlendFactor = .sourceAlpha
             descriptor.colorAttachments[0].destinationAlphaBlendFactor = .oneMinusSourceAlpha
             descriptor.vertexFunction = vertexFn
             descriptor.fragmentFunction = fragmentFn
@@ -202,6 +202,7 @@ extension ShimmeringBackgroundView {
             renderEncoder.setVertexBuffer(particleBuffer, offset: 0, index: 1)
             renderEncoder.setVertexBytes(&drawableSize, length: MemoryLayout<simd_float2>.stride, index: 2)
             renderEncoder.setVertexBytes(&elapsedTime, length: MemoryLayout<Float>.stride, index: 3)
+            renderEncoder.setFragmentBytes(&elapsedTime, length: MemoryLayout<Float>.stride, index: 0)
 
             renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4, instanceCount: particleCount)
             renderEncoder.endEncoding()
