@@ -10,10 +10,10 @@ import SwiftUI
 struct AlignedLabel: View {
     let icon: String
     let text: LocalizedStringKey
-    
+
     init(_ text: LocalizedStringKey, systemImage: String) {
         self.text = text
-        self.icon = systemImage
+        icon = systemImage
     }
 
     var body: some View {
@@ -31,4 +31,3 @@ struct AlignedLabel: View {
         }
     }
 }
-

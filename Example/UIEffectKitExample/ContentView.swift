@@ -12,18 +12,16 @@ struct ContentView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading) {
-                    NavigationLink {
+                    ExampleEntry(title: "Particle Transition", icon: "wind") {
                         SimpleController<ParticleTransitionController>()
-                            .navigationTitle("ParticleTransition")
-                    } label: {
-                        AlignedLabel("ParticleTransition", systemImage: "wind")
                     }
 
-                    NavigationLink {
+                    ExampleEntry(title: "Break Glass Transition", icon: "hammer.fill") {
                         SimpleController<BreakGlassTransitionController>()
-                            .navigationTitle("BreakGlassTransition")
-                    } label: {
-                        AlignedLabel("BreakGlassTransition", systemImage: "hammer.fill")
+                    }
+
+                    ExampleEntry(title: "Shimmer Background", icon: "sparkles") {
+                        SimpleController<ShimmeringBackgroundController>()
                     }
 
                     Divider().hidden()
