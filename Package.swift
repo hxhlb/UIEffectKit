@@ -12,6 +12,9 @@ var effectTargets: [Target] = [
     .target(name: "UIEffectKit+BreakGlassTransition", resources: [
         .process("Resources/break_glass.metal"),
     ]),
+    .target(name: "UIEffectKit+ShimmeringBackground", resources: [
+        .process("Resources/shimmering_background.metal"),
+    ]),
 ]
 for target in effectTargets {
     target.dependencies.append(.init(stringLiteral: baseTarget.name))
