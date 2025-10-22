@@ -30,8 +30,6 @@ struct ContentView: View {
                 }
                 .padding()
             }
-            // avoid problem on Mac
-            .toolbar { Button("") {}.hidden() }
             .navigationTitle("UIEffectKit")
         }
     }
