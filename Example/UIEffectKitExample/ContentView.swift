@@ -24,6 +24,10 @@ struct ContentView: View {
                         SimpleController<ShimmeringBackgroundController>()
                     }
 
+                    ExampleEntry(title: "Shimmer Grid Points", icon: "star.square.fill") {
+                        SimpleController<ShimmerGridPointsController>()
+                    }
+
                     Divider().hidden()
                 }
                 .padding()
