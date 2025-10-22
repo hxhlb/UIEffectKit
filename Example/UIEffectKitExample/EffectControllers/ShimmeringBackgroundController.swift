@@ -15,7 +15,7 @@ import UIEffectKit
         private let shimmeringView = ShimmeringBackgroundView(frame: .zero)
         private let titleLabel: UILabel = {
             let label = UILabel()
-            label.text = "Shimmering"
+            label.text = "Shimmering Background"
             label.font = .preferredFont(forTextStyle: .largeTitle)
             label.textColor = .white
             label.textAlignment = .center

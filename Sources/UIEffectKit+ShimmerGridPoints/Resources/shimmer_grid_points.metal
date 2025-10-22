@@ -33,28 +33,33 @@ vertex VertexOut SGP_Vertex(const device VertexIn *vertices [[buffer(0)]],
     VertexIn vin = vertices[vertexId];
     GridPoint p = points[instanceId];
 
-    float baseRadius = clamp(p.size.x, 2.0, 8.0);
+    float baseRadius = clamp(p.size.x, 4.0, 8.0);
     float blur = clamp(p.size.y, 0.05, 0.8);
 
     // Global wave to create ordered rhythm; combine row/col phases
     float wave = 0.5 + 0.5 * sin(time * 1.2 + p.wave.x) * cos(time * 0.9 + p.wave.y);
     float radius = baseRadius * mix(0.9, 1.1, wave);
 
-    // Small wiggle of position within 4–8 px neighborhood
-    float wiggleAmp = clamp(baseRadius, 4.0, 8.0) * 0.25;
+    // Small wiggle of position within 4–8 px neighborhood (in pixels)
+    float rand01 = fract(sin(p.jitter.x * 12.9898 + p.jitter.y * 78.233) * 43758.5453);
+    float wiggleAmp = mix(4.0, 8.0, rand01);
     float2 wiggle = float2(
         sin(time * 2.3 + p.jitter.x),
         cos(time * 2.0 + p.jitter.y)
     ) * wiggleAmp;
 
-    float2 offset = vin.position * (radius * 2.0);
+    float2 offsetPx = vin.position * (radius * 2.0);
     float2 ndc = float2(
         (p.origin.x + wiggle.x) / max(drawableSize.x, 1.0) * 2.0 - 1.0,
         1.0 - (p.origin.y + wiggle.y) / max(drawableSize.y, 1.0) * 2.0
     );
 
     VertexOut outv;
-    outv.position = float4(ndc + offset / max(drawableSize, 1.0), 0.0, 1.0);
+    float2 offsetNdc = float2(
+        (offsetPx.x / max(drawableSize.x, 1.0)) * 2.0,
+        -(offsetPx.y / max(drawableSize.y, 1.0)) * 2.0
+    );
+    outv.position = float4(ndc + offsetNdc, 0.0, 1.0);
     outv.localPos = vin.position * 2.0; // -1..1
     outv.blur = blur;
     outv.type = p.props.x;
@@ -87,4 +92,3 @@ fragment float4 SGP_Fragment(VertexOut in [[stage_in]]) {
     float3 c = float3(0.95, 0.96, 1.0) * (0.8 + 0.2 * in.intensity);
     return float4(c * a, a);
 }
-
