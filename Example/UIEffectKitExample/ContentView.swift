@@ -16,14 +16,14 @@ struct ContentView: View {
                         SimpleController<ParticleTransitionController>()
                             .navigationTitle("ParticleTransition")
                     } label: {
-                        Label("ParticleTransition", systemImage: "wind")
+                        AlignedLabel("ParticleTransition", systemImage: "wind")
                     }
 
                     NavigationLink {
                         SimpleController<BreakGlassTransitionController>()
                             .navigationTitle("BreakGlassTransition")
                     } label: {
-                        Label("BreakGlassTransition", systemImage: "hammer.fill")
+                        AlignedLabel("BreakGlassTransition", systemImage: "hammer.fill")
                     }
 
                     Divider().hidden()

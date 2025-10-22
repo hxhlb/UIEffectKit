@@ -162,6 +162,8 @@ extension ShimmeringBackgroundView {
                 particleCount > 0
             else { return }
 
+            _ = device
+
             guard let drawable = view.currentDrawable, let renderPassDescriptor = view.currentRenderPassDescriptor else { return }
 
             let now = CACurrentMediaTime()

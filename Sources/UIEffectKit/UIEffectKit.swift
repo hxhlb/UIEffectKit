@@ -7,4 +7,5 @@
 
 @_exported import UIEffectKit_BreakGlassTransition
 @_exported import UIEffectKit_ParticleTransition
+@_exported import UIEffectKit_ShimmeringBackground
 @_exported import UIEffectKitBase
