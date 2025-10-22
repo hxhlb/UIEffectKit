@@ -22,7 +22,7 @@ import UIEffectKit
 
         override func viewDidLoad() {
             super.viewDidLoad()
-            view.backgroundColor = .black
+            view.backgroundColor = .clear
             view.addSubview(effectView)
             view.addSubview(titleLabel)
         }
@@ -55,7 +55,7 @@ import UIEffectKit
         override func viewDidLoad() {
             super.viewDidLoad()
             view.wantsLayer = true
-            view.layer?.backgroundColor = NSColor.black.cgColor
+            view.layer?.backgroundColor = NSColor.clear.cgColor
             view.addSubview(effectView)
             view.addSubview(titleField)
         }
@@ -68,4 +68,3 @@ import UIEffectKit
         }
     }
 #endif
-

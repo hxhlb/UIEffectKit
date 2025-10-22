@@ -21,6 +21,54 @@ public final class ShimmerGridPointsView: EffectKitView {
     private var metalView: MTKView?
     private let renderer = Renderer()
 
+    public struct Configuration: Equatable {
+        public enum ShapeMode: Equatable {
+            case mixed
+            case circles
+            case diamonds
+        }
+
+        public var spacing: Float = 64
+        public var baseColor: SIMD3<Float> = .init(0.95, 0.96, 1.0)
+        public var waveSpeed: Float = 1.1
+        public var waveStrength: Float = 0.8
+        public var blurRange: ClosedRange<Float> = 0.08 ... 0.25
+        public var intensityRange: ClosedRange<Float> = 0.6 ... 0.95
+        public var shapeMode: ShapeMode = .mixed
+        public var enableWiggle: Bool = false
+        public var hoverRadius: Float = 96
+        public var hoverBoost: Float = 0.6
+
+        public init() {}
+    }
+
+    @MainActor
+    public var configuration = Configuration() {
+        didSet { renderer.updateConfiguration(configuration) }
+    }
+
+    @MainActor
+    public func setHover(pointInView: CGPoint?) {
+        guard let metalView else {
+            renderer.setHover(nil)
+            return
+        }
+        guard let pointInView else {
+            renderer.setHover(nil)
+            return
+        }
+        #if canImport(UIKit)
+            let scale = metalView.window?.screen.nativeScale ?? UIScreen.main.nativeScale
+        #elseif canImport(AppKit)
+            let scale = metalView.window?.backingScaleFactor
+                ?? metalView.layer?.contentsScale
+                ?? NSScreen.main?.backingScaleFactor
+                ?? 1
+        #endif
+        let pixel = SIMD2<Float>(Float(pointInView.x * scale), Float(pointInView.y * scale))
+        renderer.setHover(pixel)
+    }
+
     #if canImport(UIKit)
         override public init(frame: CGRect) {
             super.init(frame: frame)
@@ -81,12 +129,22 @@ public final class ShimmerGridPointsView: EffectKitView {
             clipsToBounds = false
             metalView.clipsToBounds = false
             backgroundColor = .clear
+            if #available(iOS 13.4, *) {
+                let hover = UIHoverGestureRecognizer(target: self, action: #selector(handleHover(_:)))
+                metalView.addGestureRecognizer(hover)
+            }
         #elseif canImport(AppKit)
             wantsLayer = true
             layer?.masksToBounds = false
             layer?.backgroundColor = NSColor.clear.cgColor
             metalView.wantsLayer = true
             metalView.layer?.masksToBounds = false
+            addTrackingArea(NSTrackingArea(
+                rect: bounds,
+                options: [.activeInKeyWindow, .mouseMoved, .inVisibleRect],
+                owner: self,
+                userInfo: nil
+            ))
         #endif
     }
 
@@ -126,5 +184,21 @@ public final class ShimmerGridPointsView: EffectKitView {
     required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-}
 
+    #if canImport(UIKit)
+        @objc private func handleHover(_ g: UIHoverGestureRecognizer) {
+            let location = g.location(in: metalView)
+            switch g.state {
+            case .began, .changed:
+                setHover(pointInView: location)
+            default:
+                setHover(pointInView: nil)
+            }
+        }
+    #elseif canImport(AppKit)
+        override public func mouseMoved(with event: NSEvent) {
+            let loc = convert(event.locationInWindow, from: nil)
+            setHover(pointInView: loc)
+        }
+    #endif
+}

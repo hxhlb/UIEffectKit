@@ -25,7 +25,14 @@ struct ContentView: View {
                     }
 
                     ExampleEntry(title: "Shimmer Grid Points", icon: "star.square.fill") {
-                        SimpleController<ShimmerGridPointsController>()
+                        ZStack {
+                            LinearGradient(colors: [
+                                Color(red: 0.85, green: 0.92, blue: 1.0),
+                                Color(red: 0.90, green: 0.96, blue: 1.0)
+                            ], startPoint: .topLeading, endPoint: .bottomTrailing)
+                            .opacity(0.6)
+                            SimpleController<ShimmerGridPointsController>()
+                        }
                     }
 
                     Divider().hidden()

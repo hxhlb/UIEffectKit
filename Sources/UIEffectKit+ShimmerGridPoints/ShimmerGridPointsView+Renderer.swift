@@ -8,6 +8,22 @@ import QuartzCore
 
 extension ShimmerGridPointsView {
     final class Renderer: NSObject, MTKViewDelegate {
+        struct Uniforms {
+            var drawableSize: simd_float2
+            var time: Float
+            var baseColor: simd_float3
+            var waveSpeed: Float
+            var waveStrength: Float
+            var blurMin: Float
+            var blurMax: Float
+            var intensityMin: Float
+            var intensityMax: Float
+            var shapeMode: Int32 // 0 mixed, 1 circles, 2 diamonds
+            var enableWiggle: Int32
+            var hoverPos: simd_float2
+            var hoverRadius: Float
+            var hoverBoost: Float
+        }
         struct GridPoint {
             var origin: simd_float2
             var jitter: simd_float2
@@ -25,10 +41,27 @@ extension ShimmerGridPointsView {
         private var renderPipeline: MTLRenderPipelineState?
         private var vertexBuffer: MTLBuffer?
         private var pointsBuffer: MTLBuffer?
+        private var uniforms = Uniforms(
+            drawableSize: .zero,
+            time: 0,
+            baseColor: .init(0.95, 0.96, 1.0),
+            waveSpeed: 1.1,
+            waveStrength: 0.8,
+            blurMin: 0.08,
+            blurMax: 0.25,
+            intensityMin: 0.6,
+            intensityMax: 0.95,
+            shapeMode: 0,
+            enableWiggle: 0,
+            hoverPos: .init(-1e6, -1e6),
+            hoverRadius: 96,
+            hoverBoost: 0.6
+        )
         private var instanceCount: Int = 0
         private var drawableSize: simd_float2 = .zero
         private var time: Float = 0
         private var last: CFTimeInterval?
+        private var spacing: Float = 64
 
         func setup(with device: MTLDevice) {
             self.device = device
@@ -42,6 +75,32 @@ extension ShimmerGridPointsView {
             drawableSize = .init(Float(size.width), Float(size.height))
             last = nil
             regenerateGrid()
+        }
+
+        @MainActor
+        func updateConfiguration(_ config: ShimmerGridPointsView.Configuration) {
+            spacing = max(1, config.spacing)
+            uniforms.baseColor = config.baseColor
+            uniforms.waveSpeed = config.waveSpeed
+            uniforms.waveStrength = config.waveStrength
+            uniforms.blurMin = config.blurRange.lowerBound
+            uniforms.blurMax = config.blurRange.upperBound
+            uniforms.intensityMin = config.intensityRange.lowerBound
+            uniforms.intensityMax = config.intensityRange.upperBound
+            switch config.shapeMode {
+            case .mixed: uniforms.shapeMode = 0
+            case .circles: uniforms.shapeMode = 1
+            case .diamonds: uniforms.shapeMode = 2
+            }
+            uniforms.enableWiggle = config.enableWiggle ? 1 : 0
+            uniforms.hoverRadius = config.hoverRadius
+            uniforms.hoverBoost = config.hoverBoost
+            regenerateGrid()
+        }
+
+        @MainActor
+        func setHover(_ pos: simd_float2?) {
+            if let p = pos { uniforms.hoverPos = p } else { uniforms.hoverPos = .init(-1e6, -1e6) }
         }
 
         private func setupPipeline(device: MTLDevice) {
@@ -84,13 +143,11 @@ extension ShimmerGridPointsView {
         private func regenerateGrid() {
             guard let device, drawableSize.x > 0, drawableSize.y > 0 else { return }
 
-            // Create a regular grid spacing; ensure neat alignment
-            let spacing: Float = 16 // px grid spacing
-            let margin: Float = 8
-            let startX = margin
-            let startY = margin
-            let cols = max(1, Int((drawableSize.x - margin * 2) / spacing))
-            let rows = max(1, Int((drawableSize.y - margin * 2) / spacing))
+            // Regular grid to edges. Start at 0 and extend past edge by +1 to ensure fill.
+            let startX: Float = 0
+            let startY: Float = 0
+            let cols = max(1, Int(ceil(drawableSize.x / spacing)) + 1)
+            let rows = max(1, Int(ceil(drawableSize.y / spacing)) + 1)
 
             var points = [GridPoint]()
             points.reserveCapacity(rows * cols)
@@ -101,14 +158,19 @@ extension ShimmerGridPointsView {
                     let y = startY + Float(r) * spacing
 
                     // Alternate shape types to add visual variety, but still ordered
-                    let type: Float = ((r + c) % 2 == 0) ? 0 : 1
+                    var type: Float
+                    switch uniforms.shapeMode {
+                    case 1: type = 0 // circles
+                    case 2: type = 1 // diamonds
+                    default: type = ((r + c) % 2 == 0) ? 0 : 1 // mixed
+                    }
 
                     // Radius within 4–8 px range as asked
                     let radius = Float.random(in: 4.0 ... 8.0)
-                    let blur = Float.random(in: 0.08 ... 0.25)
+                    let blur = Float.random(in: uniforms.blurMin ... uniforms.blurMax)
 
                     let jitter = simd_float2(Float.random(in: 0 ..< .pi * 2), Float.random(in: 0 ..< .pi * 2))
-                    let baseIntensity = Float.random(in: 0.6 ... 0.9)
+                    let baseIntensity = Float.random(in: uniforms.intensityMin ... uniforms.intensityMax)
 
                     // Wave phases derived from row/col to form stripes/diagonals
                     let rowPhase = Float(r) * 0.35
@@ -154,10 +216,11 @@ extension ShimmerGridPointsView {
             re.setRenderPipelineState(renderPipeline)
             re.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
             re.setVertexBuffer(pointsBuffer, offset: 0, index: 1)
-            var ds = drawableSize
-            var t = time
-            re.setVertexBytes(&ds, length: MemoryLayout<simd_float2>.stride, index: 2)
-            re.setVertexBytes(&t, length: MemoryLayout<Float>.stride, index: 3)
+            uniforms.drawableSize = drawableSize
+            uniforms.time = time
+            re.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 2)
+            // Pass uniforms to fragment too at index 0 per shader signature
+            re.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
             re.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4, instanceCount: instanceCount)
             re.endEncoding()
 
@@ -168,4 +231,3 @@ extension ShimmerGridPointsView {
         func mtkView(_: MTKView, drawableSizeWillChange _: CGSize) {}
     }
 }
-
