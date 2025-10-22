@@ -19,6 +19,13 @@ struct ContentView: View {
                         Label("ParticleTransition", systemImage: "wind")
                     }
 
+                    NavigationLink {
+                        SimpleController<BreakGlassTransitionController>()
+                            .navigationTitle("BreakGlassTransition")
+                    } label: {
+                        Label("BreakGlassTransition", systemImage: "hammer.fill")
+                    }
+
                     Divider().hidden()
                 }
                 .padding()

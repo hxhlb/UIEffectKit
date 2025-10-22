@@ -48,6 +48,7 @@ class ParticleView: EffectKitView {
         metalView = MTKView(frame: .zero, device: device)
         configureMetalView()
         addSubview(metalView)
+        updateMetalViewLayout(for: bounds)
     }
 
     private func configureMetalView() {
@@ -79,9 +80,34 @@ class ParticleView: EffectKitView {
         MTLCreateSystemDefaultDevice()
     }
 
+    private func updateMetalViewLayout(for bounds: CGRect) {
+        let expandedBounds = bounds.insetBy(dx: -bounds.width, dy: -bounds.height)
+        metalView.frame = expandedBounds
+
+        #if canImport(UIKit)
+            let scale = metalView.window?.screen.nativeScale
+                ?? UIScreen.main.nativeScale
+        #elseif canImport(AppKit)
+            let scale = metalView.window?.backingScaleFactor
+                ?? metalView.layer?.contentsScale
+                ?? NSScreen.main?.backingScaleFactor
+                ?? 1
+        #endif
+
+        let drawableSize = CGSize(width: expandedBounds.width * scale, height: expandedBounds.height * scale)
+        metalView.drawableSize = drawableSize
+    }
+
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
         fatalError()
+    }
+
+    deinit {
+        metalView.delegate = nil
+        renderer.cancel()
+        metalView.removeFromSuperview()
+        metalView = nil
     }
 
     func beginWith(
@@ -103,16 +129,14 @@ class ParticleView: EffectKitView {
     #if canImport(UIKit)
         override func layoutSubviews() {
             super.layoutSubviews()
-            let expandedBounds = bounds.insetBy(dx: -bounds.width, dy: -bounds.height)
-            metalView.frame = expandedBounds
+            updateMetalViewLayout(for: bounds)
         }
     #endif
 
     #if canImport(AppKit)
         override func layout() {
             super.layout()
-            let expandedBounds = bounds.insetBy(dx: -bounds.width, dy: -bounds.height)
-            metalView.frame = expandedBounds
+            updateMetalViewLayout(for: bounds)
         }
     #endif
 }

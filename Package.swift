@@ -9,6 +9,9 @@ var effectTargets: [Target] = [
     .target(name: "UIEffectKit+ParticleTransition", resources: [
         .process("Resources/main.metal"),
     ]),
+    .target(name: "UIEffectKit+BreakGlassTransition", resources: [
+        .process("Resources/break_glass.metal"),
+    ]),
 ]
 for target in effectTargets {
     target.dependencies.append(.init(stringLiteral: baseTarget.name))

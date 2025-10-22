@@ -85,7 +85,10 @@ extension ParticleView {
             }
         }
 
-        private func createRenderPipelineDescriptor(vertexFunction: MTLFunction, fragmentFunction: MTLFunction) -> MTLRenderPipelineDescriptor {
+        private func createRenderPipelineDescriptor(
+            vertexFunction: MTLFunction,
+            fragmentFunction: MTLFunction
+        ) -> MTLRenderPipelineDescriptor {
             let descriptor = MTLRenderPipelineDescriptor()
             descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
             descriptor.colorAttachments[0].isBlendingEnabled = true
@@ -111,7 +114,9 @@ extension ParticleView {
 
             if checkAllParticlesDead() {
                 DispatchQueue.main.async { [weak self] in
-                    self?.onComplete?()
+                    guard let self else { return }
+                    cleanupResources()
+                    onComplete?()
                 }
                 return
             }
@@ -220,6 +225,36 @@ extension ParticleView {
             let samplerState = device.makeSamplerState(descriptor: samplerDescriptor)
             renderCommandEncoder.setFragmentSamplerState(samplerState, index: 0)
         }
+
+        private func cleanupResources() {
+            isPrepared = false
+            hasRenderedFirstFrame = false
+            particleCount = 0
+            targetFrameSize = .zero
+            stepSize = 0
+            maxLife = 0
+
+            vertexBuffer.setPurgeableState(.empty)
+            vertexBuffer = nil
+            particleBuffer.setPurgeableState(.empty)
+            particleBuffer = nil
+            texture.setPurgeableState(.empty)
+            texture = nil
+            commandQueue = nil
+            renderPipeline = nil
+            computePipeline = nil
+            device = nil
+
+            onComplete = nil
+            onFirstFrameRendered = nil
+        }
+
+        func cancel() {
+            guard isPrepared else { return }
+            DispatchQueue.main.async { [weak self] in
+                self?.cleanupResources()
+            }
+        }
     }
 }
 
@@ -250,12 +285,15 @@ extension ParticleView.Renderer {
         let estimatedParticleCount = 1
             * Int(targetFrameWidth / Float(particleStep))
             * Int(targetFrameHeight / Float(particleStep))
-        particles.reserveCapacity(estimatedParticleCount)
-        
+        let pixelMultiplier = 1
+        particles.reserveCapacity(estimatedParticleCount * pixelMultiplier)
+
         for y in stride(from: 0, to: Int(targetFrameHeight), by: particleStep) {
             for x in stride(from: 0, to: Int(targetFrameWidth), by: particleStep) {
                 let particle = createParticle(x: x, y: y, step: particleStep)
-                particles.append(particle)
+                for _ in 0 ..< pixelMultiplier {
+                    particles.append(particle)
+                }
             }
         }
 
