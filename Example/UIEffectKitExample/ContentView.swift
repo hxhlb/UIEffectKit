@@ -20,19 +20,10 @@ struct ContentView: View {
                         SimpleController<BreakGlassTransitionController>()
                     }
 
-                    ExampleEntry(title: "Shimmer Background", icon: "sparkles") {
-                        SimpleController<ShimmeringBackgroundController>()
-                    }
+                    // Shimmer Background example removed
 
                     ExampleEntry(title: "Shimmer Grid Points", icon: "star.square.fill") {
-                        ZStack {
-                            LinearGradient(colors: [
-                                Color(red: 0.85, green: 0.92, blue: 1.0),
-                                Color(red: 0.90, green: 0.96, blue: 1.0)
-                            ], startPoint: .topLeading, endPoint: .bottomTrailing)
-                            .opacity(0.6)
-                            SimpleController<ShimmerGridPointsController>()
-                        }
+                        ShimmerGridPointsPanel()
                     }
 
                     Divider().hidden()

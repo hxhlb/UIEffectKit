@@ -28,7 +28,7 @@ public final class ShimmerGridPointsView: EffectKitView {
             case diamonds
         }
 
-        public var spacing: Float = 64
+        public var spacing: Float = 32
         public var baseColor: SIMD3<Float> = .init(0.95, 0.96, 1.0)
         public var waveSpeed: Float = 1.1
         public var waveStrength: Float = 0.8

@@ -12,9 +12,6 @@ var effectTargets: [Target] = [
     .target(name: "UIEffectKit+BreakGlassTransition", resources: [
         .process("Resources/break_glass.metal"),
     ]),
-    .target(name: "UIEffectKit+ShimmeringBackground", resources: [
-        .process("Resources/shimmering_background.metal"),
-    ]),
     .target(name: "UIEffectKit+ShimmerGridPoints", resources: [
         .process("Resources/shimmer_grid_points.metal"),
     ]),
