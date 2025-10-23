@@ -68,14 +68,19 @@ public final class ShimmerGridPointsView: EffectKitView {
         }
         #if canImport(UIKit)
             let scale = metalView.window?.screen.nativeScale ?? UIScreen.main.nativeScale
+            let pixel = SIMD2<Float>(Float(pointInView.x * scale), Float(pointInView.y * scale))
+            renderer.setHover(pixel)
         #elseif canImport(AppKit)
             let scale = metalView.window?.backingScaleFactor
                 ?? metalView.layer?.contentsScale
                 ?? NSScreen.main?.backingScaleFactor
                 ?? 1
+            // AppKit uses bottom-left origin for view coords. Our shader expects
+            // pixel coordinates with top-left origin, so flip Y within bounds.
+            let flippedY = metalView.bounds.height - pointInView.y
+            let pixel = SIMD2<Float>(Float(pointInView.x * scale), Float(flippedY * scale))
+            renderer.setHover(pixel)
         #endif
-        let pixel = SIMD2<Float>(Float(pointInView.x * scale), Float(pointInView.y * scale))
-        renderer.setHover(pixel)
     }
 
     #if canImport(UIKit)
@@ -204,7 +209,6 @@ public final class ShimmerGridPointsView: EffectKitView {
                 setHover(pointInView: nil)
             }
         }
-
     #elseif canImport(AppKit)
         override public func mouseMoved(with event: NSEvent) {
             let loc = convert(event.locationInWindow, from: nil)

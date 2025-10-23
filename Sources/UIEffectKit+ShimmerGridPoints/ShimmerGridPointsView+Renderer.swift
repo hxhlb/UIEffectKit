@@ -24,7 +24,6 @@ extension ShimmerGridPointsView {
             var hoverRadius: Float
             var hoverBoost: Float
         }
-
         struct GridPoint {
             var origin: simd_float2
             var jitter: simd_float2
@@ -40,6 +39,7 @@ extension ShimmerGridPointsView {
         private var device: MTLDevice?
         private var commandQueue: MTLCommandQueue?
         private var renderPipeline: MTLRenderPipelineState?
+        private var pipelinePixelFormat: MTLPixelFormat = .bgra8Unorm
         private var vertexBuffer: MTLBuffer?
         private var pointsBuffer: MTLBuffer?
         private var uniforms = Uniforms(
@@ -102,10 +102,12 @@ extension ShimmerGridPointsView {
             uniforms.hoverRadius = config.hoverRadius
             uniforms.hoverBoost = config.hoverBoost
             // EDR selection: rgba16Float when enabled and supported, else 8-bit
-            if config.enableEDR, supportsEDR {
-                preferredPixelFormat = .rgba16Float
-            } else {
-                preferredPixelFormat = .bgra8Unorm
+            let newFormat: MTLPixelFormat = (config.enableEDR && supportsEDR) ? .rgba16Float : .bgra8Unorm
+            let formatChanged = (newFormat != preferredPixelFormat)
+            preferredPixelFormat = newFormat
+            if formatChanged {
+                // Recreate pipeline to match the new pixel format
+                if let device { setupPipeline(device: device) }
             }
             regenerateGrid()
         }
@@ -117,18 +119,18 @@ extension ShimmerGridPointsView {
             if let p = pos { uniforms.hoverPos = p } else { uniforms.hoverPos = .init(-1e6, -1e6) }
         }
 
-        private func detectEDR(device _: MTLDevice) {
+        private func detectEDR(device: MTLDevice) {
             #if canImport(UIKit)
-                if #available(iOS 16.0, *) {
-                    // Prefer wide color/EDR if available; MTKView sets output format but we keep pipeline in sync
-                    supportsEDR = true
-                    preferredPixelFormat = .rgba16Float
-                }
+            if #available(iOS 16.0, *) {
+                // Prefer wide color/EDR if available; MTKView sets output format but we keep pipeline in sync
+                supportsEDR = true
+                preferredPixelFormat = .rgba16Float
+            }
             #elseif canImport(AppKit)
-                if #available(macOS 12.0, *) {
-                    supportsEDR = true
-                    preferredPixelFormat = .rgba16Float
-                }
+            if #available(macOS 12.0, *) {
+                supportsEDR = true
+                preferredPixelFormat = .rgba16Float
+            }
             #endif
         }
 
@@ -152,6 +154,7 @@ extension ShimmerGridPointsView {
             desc.colorAttachments[0].destinationAlphaBlendFactor = .oneMinusSourceAlpha
             do {
                 renderPipeline = try device.makeRenderPipelineState(descriptor: desc)
+                pipelinePixelFormat = preferredPixelFormat
             } catch {
                 assertionFailure("Pipeline fail: \(error)")
             }
@@ -187,10 +190,11 @@ extension ShimmerGridPointsView {
                     let y = startY + Float(r) * spacing
 
                     // Alternate shape types to add visual variety, but still ordered
-                    let type: Float = switch uniforms.shapeMode {
-                    case 1: 0 // circles
-                    case 2: 1 // diamonds
-                    default: ((r + c) % 2 == 0) ? 0 : 1 // mixed
+                    var type: Float
+                    switch uniforms.shapeMode {
+                    case 1: type = 0 // circles
+                    case 2: type = 1 // diamonds
+                    default: type = ((r + c) % 2 == 0) ? 0 : 1 // mixed
                     }
 
                     // Radius within configurable range
@@ -223,6 +227,12 @@ extension ShimmerGridPointsView {
         }
 
         func draw(in view: MTKView) {
+            // Ensure the MTKView's pixelFormat matches our pipeline target before acquiring a drawable.
+            if view.colorPixelFormat != preferredPixelFormat {
+                view.colorPixelFormat = preferredPixelFormat
+                // Defer drawing this frame so a new drawable with the correct format is created next tick.
+                return
+            }
             guard
                 let renderPipeline,
                 let commandQueue,
@@ -232,9 +242,6 @@ extension ShimmerGridPointsView {
             else { return }
 
             guard let drawable = view.currentDrawable, let rpd = view.currentRenderPassDescriptor else { return }
-            if view.colorPixelFormat != preferredPixelFormat {
-                view.colorPixelFormat = preferredPixelFormat
-            }
 
             let now = CACurrentMediaTime()
             if let last { time += Float(now - last) } else { time = 0 }
