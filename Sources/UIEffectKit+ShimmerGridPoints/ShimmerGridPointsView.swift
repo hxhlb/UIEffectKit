@@ -51,6 +51,23 @@ public final class ShimmerGridPointsView: EffectKitView {
             #if canImport(UIKit) || canImport(AppKit)
                 if let metalView {
                     metalView.colorPixelFormat = renderer.currentPixelFormat()
+                    // Configure color space and EDR intent on the CAMetalLayer
+                    if configuration.enableEDR {
+                        metalView.colorspace = CGColorSpace(name: CGColorSpace.extendedLinearSRGB)
+                    } else {
+                        metalView.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
+                    }
+                    if let layer = metalView.layer as? CAMetalLayer {
+                        #if canImport(UIKit)
+                            if #available(iOS 16.0, *) {
+                                layer.wantsExtendedDynamicRangeContent = configuration.enableEDR
+                            }
+                        #elseif canImport(AppKit)
+                            if #available(macOS 12.0, *) {
+                                layer.wantsExtendedDynamicRangeContent = configuration.enableEDR
+                            }
+                        #endif
+                    }
                 }
             #endif
         }
@@ -132,6 +149,8 @@ public final class ShimmerGridPointsView: EffectKitView {
             metalView.preferredFramesPerSecond = 60
         #endif
         metalView.framebufferOnly = false
+        // Default to sRGB; configuration setter will switch to extended linear sRGB when EDR is enabled.
+        metalView.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
         metalView.isPaused = false
         metalView.enableSetNeedsDisplay = false
         metalView.delegate = renderer
