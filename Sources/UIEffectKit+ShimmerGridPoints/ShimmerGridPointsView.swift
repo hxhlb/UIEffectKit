@@ -40,6 +40,7 @@ public final class ShimmerGridPointsView: EffectKitView {
         public var hoverRadius: Float = 96
         public var hoverBoost: Float = 0.6
         public var enableEDR: Bool = false
+        public var edrGain: Float = 1.35
         public var radiusRange: ClosedRange<Float> = 4.0 ... 8.0
 
         public init() {}

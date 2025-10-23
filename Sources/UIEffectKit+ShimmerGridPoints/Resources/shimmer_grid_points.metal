@@ -31,6 +31,7 @@ struct Uniforms {
     float2 hoverPos;   // in pixels
     float hoverRadius;
     float hoverBoost;
+    float edrGain;     // color intensity gain for EDR displays
 };
 
 struct VertexOut {
@@ -124,6 +125,6 @@ fragment float4 SGP_Fragment(VertexOut in [[stage_in]], constant Uniforms &U [[b
     float boost = 1.0 + U.hoverBoost * hoverAtten;
 
     float a = clamp(mask * in.intensity * boost, 0.02, 0.95);
-    float3 c = U.baseColor * (0.8 + 0.2 * in.intensity);
+    float3 c = U.baseColor * (0.8 + 0.2 * in.intensity) * max(U.edrGain, 0.0);
     return float4(c * a, a);
 }

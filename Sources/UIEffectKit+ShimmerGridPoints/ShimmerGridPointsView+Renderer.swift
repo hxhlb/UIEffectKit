@@ -23,6 +23,7 @@ extension ShimmerGridPointsView {
             var hoverPos: simd_float2
             var hoverRadius: Float
             var hoverBoost: Float
+            var edrGain: Float
         }
 
         struct GridPoint {
@@ -57,7 +58,8 @@ extension ShimmerGridPointsView {
             enableWiggle: 0,
             hoverPos: .init(-1e6, -1e6),
             hoverRadius: 96,
-            hoverBoost: 0.6
+            hoverBoost: 0.6,
+            edrGain: 1.0
         )
         private var instanceCount: Int = 0
         private var drawableSize: simd_float2 = .zero
@@ -102,6 +104,7 @@ extension ShimmerGridPointsView {
             uniforms.enableWiggle = config.enableWiggle ? 1 : 0
             uniforms.hoverRadius = config.hoverRadius
             uniforms.hoverBoost = config.hoverBoost
+            uniforms.edrGain = (config.enableEDR && supportsEDR) ? max(config.edrGain, 1.0) : 1.0
             // EDR selection: rgba16Float when enabled and supported, else 8-bit
             let newFormat: MTLPixelFormat = (config.enableEDR && supportsEDR) ? .rgba16Float : .bgra8Unorm
             let formatChanged = (newFormat != preferredPixelFormat)
@@ -191,7 +194,7 @@ extension ShimmerGridPointsView {
                     let y = startY + Float(r) * spacing
 
                     // Alternate shape types to add visual variety, but still ordered
-                    var type: Float = switch uniforms.shapeMode {
+                    let type: Float = switch uniforms.shapeMode {
                     case 1: 0 // circles
                     case 2: 1 // diamonds
                     default: ((r + c) % 2 == 0) ? 0 : 1 // mixed

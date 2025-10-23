@@ -29,6 +29,7 @@ struct ShimmerGridPointsPanel: View {
     @State private var hoverRadius: Double = 96
     @State private var hoverBoost: Double = 0.6
     @State private var enableEDR: Bool = true
+    @State private var edrGain: Double = 1.35
 
     var body: some View {
         HStack(spacing: 16) {
@@ -63,6 +64,9 @@ struct ShimmerGridPointsPanel: View {
                     slider("Hover Radius", value: $hoverRadius, range: 0 ... 240)
                     slider("Hover Boost", value: $hoverBoost, range: 0 ... 2)
                     Toggle("Extra Dynamic Range", isOn: $enableEDR)
+                    if enableEDR {
+                        slider("EDR 增益", value: $edrGain, range: 1.0 ... 2.0)
+                    }
                 }
             }
         }
@@ -93,6 +97,7 @@ struct ShimmerGridPointsPanel: View {
             cfg.hoverRadius = Float(hoverRadius)
             cfg.hoverBoost = Float(hoverBoost)
             cfg.enableEDR = enableEDR
+            cfg.edrGain = Float(edrGain)
             view.configuration = cfg
             if let h = hoverSubject { view.setHover(pointInView: h) } else { view.setHover(pointInView: nil) }
         })
