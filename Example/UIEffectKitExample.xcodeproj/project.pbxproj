@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		509BB62C2DFC260200A3B5D3 /* UIEffectKit in Frameworks */ = {isa = PBXBuildFile; productRef = 509BB62B2DFC260200A3B5D3 /* UIEffectKit */; };
+		50DAA9322EA9D54D00E015C5 /* ColorfulX in Frameworks */ = {isa = PBXBuildFile; productRef = 50DAA9312EA9D54D00E015C5 /* ColorfulX */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				509BB62C2DFC260200A3B5D3 /* UIEffectKit in Frameworks */,
+				50DAA9322EA9D54D00E015C5 /* ColorfulX in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -79,6 +81,7 @@
 			name = UIEffectKitExample;
 			packageProductDependencies = (
 				509BB62B2DFC260200A3B5D3 /* UIEffectKit */,
+				50DAA9312EA9D54D00E015C5 /* ColorfulX */,
 			);
 			productName = UIEffectKitExample;
 			productReference = 509BB6062DFC254100A3B5D3 /* UIEffectKitExample.app */;
@@ -108,6 +111,9 @@
 			);
 			mainGroup = 509BB5FD2DFC254100A3B5D3;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				50DAA9302EA9D54D00E015C5 /* XCRemoteSwiftPackageReference "ColorfulX" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 509BB6072DFC254100A3B5D3 /* Products */;
 			projectDirPath = "";
@@ -366,10 +372,26 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		50DAA9302EA9D54D00E015C5 /* XCRemoteSwiftPackageReference "ColorfulX" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Lakr233/ColorfulX";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		509BB62B2DFC260200A3B5D3 /* UIEffectKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = UIEffectKit;
+		};
+		50DAA9312EA9D54D00E015C5 /* ColorfulX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 50DAA9302EA9D54D00E015C5 /* XCRemoteSwiftPackageReference "ColorfulX" */;
+			productName = ColorfulX;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

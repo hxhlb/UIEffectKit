@@ -5,6 +5,13 @@
 
 import SwiftUI
 import UIEffectKit
+#if canImport(UIKit)
+    import UIKit
+#elseif canImport(AppKit)
+    import AppKit
+#endif
+
+import ColorfulX
 
 struct ShimmerGridPointsPanel: View {
     @State private var spacing: Double = 32
@@ -24,40 +31,46 @@ struct ShimmerGridPointsPanel: View {
     @State private var enableEDR: Bool = true
 
     var body: some View {
-        VStack(spacing: 12) {
+        HStack(spacing: 16) {
             ZStack {
-                Color.black
+                ColorfulView(
+                    color: .appleIntelligence,
+                    animationDirector: SpeckleAnimationRoundedRectangleDirector(
+                        movementRate: 0.5,
+                        positionResponseRate: 0.75
+                    )
+                )
                 effectView
                     .allowsHitTesting(true)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.15)))
-            .frame(height: 280)
-
-            Group {
-                stepper("Spacing", value: $spacing, range: 8 ... 128, step: 4)
-                slider("Hue", value: $baseHue, range: 0 ... 360)
-                slider("Wave Speed", value: $waveSpeed, range: 0 ... 4)
-                slider("Wave Strength", value: $waveStrength, range: 0 ... 2)
-                range("Blur", min: $blurMin, max: $blurMax, bounds: 0 ... 0.8, step: 0.01)
-                range("Intensity", min: $intensityMin, max: $intensityMax, bounds: 0 ... 1, step: 0.01)
-                range("Radius", min: $radiusMin, max: $radiusMax, bounds: 2 ... 24, step: 0.5)
-                picker("Shape", selection: $shapeMode) {
-                    Text("Mixed").tag(0)
-                    Text("Circles").tag(1)
-                    Text("Diamonds").tag(2)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            Divider()
+            ScrollView {
+                VStack(spacing: 16) {
+                    stepper("Spacing", value: $spacing, range: 8 ... 128, step: 4)
+                    slider("Hue", value: $baseHue, range: 0 ... 360)
+                    slider("Wave Speed", value: $waveSpeed, range: 0 ... 4)
+                    slider("Wave Strength", value: $waveStrength, range: 0 ... 2)
+                    range("Blur", min: $blurMin, max: $blurMax, bounds: 0 ... 0.8, step: 0.01)
+                    range("Intensity", min: $intensityMin, max: $intensityMax, bounds: 0 ... 1, step: 0.01)
+                    range("Radius", min: $radiusMin, max: $radiusMax, bounds: 2 ... 24, step: 0.5)
+                    picker("Shape", selection: $shapeMode) {
+                        Text("Mixed").tag(0)
+                        Text("Circles").tag(1)
+                        Text("Diamonds").tag(2)
+                    }
+                    Toggle("Wiggle", isOn: $enableWiggle)
+                    slider("Hover Radius", value: $hoverRadius, range: 0 ... 240)
+                    slider("Hover Boost", value: $hoverBoost, range: 0 ... 2)
+                    Toggle("Extra Dynamic Range", isOn: $enableEDR)
                 }
-                Toggle("Wiggle", isOn: $enableWiggle)
-                slider("Hover Radius", value: $hoverRadius, range: 0 ... 240)
-                slider("Hover Boost", value: $hoverBoost, range: 0 ... 2)
-                Toggle("Extra Dynamic Range", isOn: $enableEDR)
             }
         }
         .padding()
     }
 
     private var effectView: some View {
-        EffectKitViewRepresentable(make: {
+        EffectKitViewRepresentable<ShimmerGridPointsView>(make: {
             let v = ShimmerGridPointsView(frame: .zero)
             return v
         }, update: { view in
@@ -68,9 +81,13 @@ struct ShimmerGridPointsPanel: View {
             cfg.baseColor = .init(Float(rgb.r), Float(rgb.g), Float(rgb.b))
             cfg.waveSpeed = Float(waveSpeed)
             cfg.waveStrength = Float(waveStrength)
-            cfg.blurRange = Float(blurMin) ... Float(blurMax)
-            cfg.intensityRange = Float(intensityMin) ... Float(intensityMax)
-            cfg.radiusRange = Float(radiusMin) ... Float(radiusMax)
+            // Normalize ranges to avoid invalid ClosedRange construction
+            let bLo = min(blurMin, blurMax), bHi = max(blurMin, blurMax)
+            let iLo = min(intensityMin, intensityMax), iHi = max(intensityMin, intensityMax)
+            let rLo = min(radiusMin, radiusMax), rHi = max(radiusMin, radiusMax)
+            cfg.blurRange = Float(bLo) ... Float(bHi)
+            cfg.intensityRange = Float(iLo) ... Float(iHi)
+            cfg.radiusRange = Float(rLo) ... Float(rHi)
             cfg.shapeMode = [ShimmerGridPointsView.Configuration.ShapeMode.mixed, .circles, .diamonds][min(max(shapeMode, 0), 2)]
             cfg.enableWiggle = enableWiggle
             cfg.hoverRadius = Float(hoverRadius)
@@ -128,7 +145,7 @@ private func range(_ title: String, min: Binding<Double>, max: Binding<Double>, 
     }
 }
 
-private func picker<T: Hashable>(_ title: String, selection: Binding<T>, @ViewBuilder content: () -> some View) -> some View {
+private func picker(_ title: String, selection: Binding<some Hashable>, @ViewBuilder content: () -> some View) -> some View {
     VStack(alignment: .leading) {
         Text(title)
         Picker(title, selection: selection) { content() }
@@ -153,17 +170,16 @@ private struct HoverReporter: View {
 private extension ShimmerGridPointsPanel {
     static func rgb(from color: Color) -> (r: Double, g: Double, b: Double) {
         #if canImport(UIKit)
-        let ui = UIColor(color)
-        var r: CGFloat = 1, g: CGFloat = 1, b: CGFloat = 1, a: CGFloat = 1
-        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
-        return (Double(r), Double(g), Double(b))
+            let ui = UIColor(color)
+            var r: CGFloat = 1, g: CGFloat = 1, b: CGFloat = 1, a: CGFloat = 1
+            ui.getRed(&r, green: &g, blue: &b, alpha: &a)
+            return (Double(r), Double(g), Double(b))
         #elseif canImport(AppKit)
-        let ns = NSColor(color)
-        let conv = ns.usingColorSpace(.deviceRGB) ?? ns.usingColorSpace(.sRGB) ?? ns
-        return (Double(conv.redComponent), Double(conv.greenComponent), Double(conv.blueComponent))
+            let ns = NSColor(color)
+            let conv = ns.usingColorSpace(.deviceRGB) ?? ns.usingColorSpace(.sRGB) ?? ns
+            return (Double(conv.redComponent), Double(conv.greenComponent), Double(conv.blueComponent))
         #else
-        return (1, 1, 1)
+            return (1, 1, 1)
         #endif
     }
 }
-

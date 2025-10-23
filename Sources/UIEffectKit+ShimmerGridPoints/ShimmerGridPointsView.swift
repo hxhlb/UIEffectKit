@@ -204,6 +204,7 @@ public final class ShimmerGridPointsView: EffectKitView {
                 setHover(pointInView: nil)
             }
         }
+
     #elseif canImport(AppKit)
         override public func mouseMoved(with event: NSEvent) {
             let loc = convert(event.locationInWindow, from: nil)

@@ -8,49 +8,47 @@
 import Foundation
 
 #if canImport(SwiftUI)
-import SwiftUI
+    import SwiftUI
 
-public protocol AnyEffectKitView: AnyObject {}
+    public protocol AnyEffectKitView: AnyObject {}
+    extension EffectKitView: AnyEffectKitView {}
 
-extension EffectKitView: AnyEffectKitView {}
+    #if canImport(UIKit)
+        import UIKit
 
-#if canImport(UIKit)
-import UIKit
+        public struct EffectKitViewRepresentable<V: EffectKitView>: UIViewRepresentable {
+            public typealias UIViewType = V
 
-public struct EffectKitViewRepresentable<V: EffectKitView>: UIViewRepresentable {
-    public typealias UIViewType = V
+            private let make: () -> V
+            private let update: (V) -> Void
 
-    private let make: () -> V
-    private let update: (V) -> Void
+            public init(make: @escaping () -> V, update: @escaping (V) -> Void) {
+                self.make = make
+                self.update = update
+            }
 
-    public init(make: @escaping () -> V, update: @escaping (V) -> Void) {
-        self.make = make
-        self.update = update
-    }
+            public func makeUIView(context _: Context) -> V { make() }
+            public func updateUIView(_ view: V, context _: Context) { update(view) }
+        }
 
-    public func makeUIView(context _: Context) -> V { make() }
-    public func updateUIView(_ view: V, context _: Context) { update(view) }
-}
+    #elseif canImport(AppKit)
+        import AppKit
 
-#elseif canImport(AppKit)
-import AppKit
+        public struct EffectKitViewRepresentable<V: EffectKitView>: NSViewRepresentable {
+            public typealias NSViewType = V
 
-public struct EffectKitViewRepresentable<V: EffectKitView>: NSViewRepresentable {
-    public typealias NSViewType = V
+            private let make: () -> V
+            private let update: (V) -> Void
 
-    private let make: () -> V
-    private let update: (V) -> Void
+            public init(make: @escaping () -> V, update: @escaping (V) -> Void) {
+                self.make = make
+                self.update = update
+            }
 
-    public init(make: @escaping () -> V, update: @escaping (V) -> Void) {
-        self.make = make
-        self.update = update
-    }
+            public func makeNSView(context _: Context) -> V { make() }
+            public func updateNSView(_ view: V, context _: Context) { update(view) }
+        }
 
-    public func makeNSView(context _: Context) -> V { make() }
-    public func updateNSView(_ view: V, context _: Context) { update(view) }
-}
+    #endif
 
 #endif
-
-#endif
-
