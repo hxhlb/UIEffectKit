@@ -7,6 +7,7 @@
 //
 
 import MetalKit
+import QuartzCore
 import simd
 import UIEffectKitBase
 
@@ -51,12 +52,20 @@ public final class ShimmerGridPointsView: EffectKitView {
             #if canImport(UIKit) || canImport(AppKit)
                 if let metalView {
                     metalView.colorPixelFormat = renderer.currentPixelFormat()
-                    // Configure color space and EDR intent on the CAMetalLayer
-                    if configuration.enableEDR {
-                        metalView.colorspace = CGColorSpace(name: CGColorSpace.extendedLinearSRGB)
-                    } else {
-                        metalView.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
-                    }
+                    // Configure color space and EDR intent on the underlying CAMetalLayer.
+                    #if os(macOS)
+                        // MTKView.colorspace is available on macOS
+                        metalView.colorspace = configuration.enableEDR
+                            ? CGColorSpace(name: CGColorSpace.extendedLinearSRGB)
+                            : CGColorSpace(name: CGColorSpace.sRGB)
+                    #else
+                        // On iOS/tvOS, set colorspace on the CAMetalLayer instead.
+                        if let layer = metalView.layer as? CAMetalLayer {
+                            layer.colorspace = configuration.enableEDR
+                                ? CGColorSpace(name: CGColorSpace.extendedLinearSRGB)
+                                : CGColorSpace(name: CGColorSpace.sRGB)
+                        }
+                    #endif
                     if let layer = metalView.layer as? CAMetalLayer {
                         #if canImport(UIKit)
                             if #available(iOS 16.0, *) {
@@ -150,7 +159,11 @@ public final class ShimmerGridPointsView: EffectKitView {
         #endif
         metalView.framebufferOnly = false
         // Default to sRGB; configuration setter will switch to extended linear sRGB when EDR is enabled.
-        metalView.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
+        #if os(macOS)
+            metalView.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
+        #else
+            (metalView.layer as? CAMetalLayer)?.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
+        #endif
         metalView.isPaused = false
         metalView.enableSetNeedsDisplay = false
         metalView.delegate = renderer
