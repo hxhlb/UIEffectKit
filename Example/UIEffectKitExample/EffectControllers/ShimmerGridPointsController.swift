@@ -25,6 +25,10 @@ import UIEffectKit
             view.backgroundColor = .clear
             view.addSubview(effectView)
             view.addSubview(titleLabel)
+
+            let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+            pan.maximumNumberOfTouches = 1
+            effectView.addGestureRecognizer(pan)
         }
 
         override func viewDidLayoutSubviews() {
@@ -32,6 +36,16 @@ import UIEffectKit
             effectView.frame = view.bounds
             titleLabel.sizeToFit()
             titleLabel.center = .init(x: view.bounds.midX, y: 64)
+        }
+
+        @objc private func handlePan(_ g: UIPanGestureRecognizer) {
+            let loc = g.location(in: effectView)
+            switch g.state {
+            case .began, .changed:
+                effectView.setHover(pointInView: loc)
+            default:
+                effectView.setHover(pointInView: nil)
+            }
         }
     }
 
@@ -58,6 +72,9 @@ import UIEffectKit
             view.layer?.backgroundColor = NSColor.clear.cgColor
             view.addSubview(effectView)
             view.addSubview(titleField)
+
+            let tracking = NSTrackingArea(rect: .zero, options: [.activeInKeyWindow, .mouseMoved, .inVisibleRect], owner: self, userInfo: nil)
+            view.addTrackingArea(tracking)
         }
 
         override func viewDidLayout() {
@@ -65,6 +82,11 @@ import UIEffectKit
             effectView.frame = view.bounds
             titleField.sizeToFit()
             titleField.frame.origin = .init(x: (view.bounds.width - titleField.frame.width) / 2, y: view.bounds.height - 64)
+        }
+
+        override func mouseMoved(with event: NSEvent) {
+            let loc = view.convert(event.locationInWindow, from: nil)
+            effectView.setHover(pointInView: loc)
         }
     }
 #endif

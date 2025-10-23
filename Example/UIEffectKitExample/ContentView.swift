@@ -20,8 +20,6 @@ struct ContentView: View {
                         SimpleController<BreakGlassTransitionController>()
                     }
 
-                    // Shimmer Background example removed
-
                     ExampleEntry(title: "Shimmer Grid Points", icon: "star.square.fill") {
                         ShimmerGridPointsPanel()
                     }
