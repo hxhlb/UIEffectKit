@@ -38,13 +38,22 @@ public final class ShimmerGridPointsView: EffectKitView {
         public var enableWiggle: Bool = false
         public var hoverRadius: Float = 96
         public var hoverBoost: Float = 0.6
+        public var enableEDR: Bool = false
+        public var radiusRange: ClosedRange<Float> = 4.0 ... 8.0
 
         public init() {}
     }
 
     @MainActor
     public var configuration = Configuration() {
-        didSet { renderer.updateConfiguration(configuration) }
+        didSet {
+            renderer.updateConfiguration(configuration)
+            #if canImport(UIKit) || canImport(AppKit)
+                if let metalView {
+                    metalView.colorPixelFormat = renderer.currentPixelFormat()
+                }
+            #endif
+        }
     }
 
     @MainActor

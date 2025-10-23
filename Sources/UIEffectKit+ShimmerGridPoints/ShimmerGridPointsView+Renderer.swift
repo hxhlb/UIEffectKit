@@ -62,10 +62,14 @@ extension ShimmerGridPointsView {
         private var time: Float = 0
         private var last: CFTimeInterval?
         private var spacing: Float = 64
+        private var radiusRange: ClosedRange<Float> = 4.0 ... 8.0
+        private var supportsEDR: Bool = false
+        private var preferredPixelFormat: MTLPixelFormat = .bgra8Unorm
 
         func setup(with device: MTLDevice) {
             self.device = device
             commandQueue = device.makeCommandQueue()
+            detectEDR(device: device)
             setupPipeline(device: device)
             setupVertex(device: device)
             regenerateGrid()
@@ -87,6 +91,7 @@ extension ShimmerGridPointsView {
             uniforms.blurMax = config.blurRange.upperBound
             uniforms.intensityMin = config.intensityRange.lowerBound
             uniforms.intensityMax = config.intensityRange.upperBound
+            radiusRange = config.radiusRange
             switch config.shapeMode {
             case .mixed: uniforms.shapeMode = 0
             case .circles: uniforms.shapeMode = 1
@@ -95,12 +100,35 @@ extension ShimmerGridPointsView {
             uniforms.enableWiggle = config.enableWiggle ? 1 : 0
             uniforms.hoverRadius = config.hoverRadius
             uniforms.hoverBoost = config.hoverBoost
+            // EDR selection: rgba16Float when enabled and supported, else 8-bit
+            if config.enableEDR, supportsEDR {
+                preferredPixelFormat = .rgba16Float
+            } else {
+                preferredPixelFormat = .bgra8Unorm
+            }
             regenerateGrid()
         }
+
+        func currentPixelFormat() -> MTLPixelFormat { preferredPixelFormat }
 
         @MainActor
         func setHover(_ pos: simd_float2?) {
             if let p = pos { uniforms.hoverPos = p } else { uniforms.hoverPos = .init(-1e6, -1e6) }
+        }
+
+        private func detectEDR(device: MTLDevice) {
+            #if canImport(UIKit)
+            if #available(iOS 16.0, *) {
+                // Prefer wide color/EDR if available; MTKView sets output format but we keep pipeline in sync
+                supportsEDR = true
+                preferredPixelFormat = .rgba16Float
+            }
+            #elseif canImport(AppKit)
+            if #available(macOS 12.0, *) {
+                supportsEDR = true
+                preferredPixelFormat = .rgba16Float
+            }
+            #endif
         }
 
         private func setupPipeline(device: MTLDevice) {
@@ -113,7 +141,7 @@ extension ShimmerGridPointsView {
             let desc = MTLRenderPipelineDescriptor()
             desc.vertexFunction = v
             desc.fragmentFunction = f
-            desc.colorAttachments[0].pixelFormat = .bgra8Unorm
+            desc.colorAttachments[0].pixelFormat = preferredPixelFormat
             desc.colorAttachments[0].isBlendingEnabled = true
             desc.colorAttachments[0].rgbBlendOperation = .add
             desc.colorAttachments[0].alphaBlendOperation = .add
@@ -165,8 +193,8 @@ extension ShimmerGridPointsView {
                     default: type = ((r + c) % 2 == 0) ? 0 : 1 // mixed
                     }
 
-                    // Radius within 4–8 px range as asked
-                    let radius = Float.random(in: 4.0 ... 8.0)
+                    // Radius within configurable range
+                    let radius = Float.random(in: radiusRange)
                     let blur = Float.random(in: uniforms.blurMin ... uniforms.blurMax)
 
                     let jitter = simd_float2(Float.random(in: 0 ..< .pi * 2), Float.random(in: 0 ..< .pi * 2))
@@ -204,6 +232,9 @@ extension ShimmerGridPointsView {
             else { return }
 
             guard let drawable = view.currentDrawable, let rpd = view.currentRenderPassDescriptor else { return }
+            if view.colorPixelFormat != preferredPixelFormat {
+                view.colorPixelFormat = preferredPixelFormat
+            }
 
             let now = CACurrentMediaTime()
             if let last { time += Float(now - last) } else { time = 0 }
