@@ -10,23 +10,18 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading) {
-                    ExampleEntry(title: "Particle Transition", icon: "wind") {
-                        SimpleController<ParticleTransitionController>()
-                    }
-
-                    ExampleEntry(title: "Break Glass Transition", icon: "hammer.fill") {
-                        SimpleController<BreakGlassTransitionController>()
-                    }
-
-                    ExampleEntry(title: "Shimmer Grid Points", icon: "star.square.fill") {
-                        ShimmerGridPointsPanel()
-                    }
-
-                    Divider().hidden()
+            Form {
+                ExampleEntry(title: "Particle Transition", icon: "wind") {
+                    SimpleController<ParticleTransitionController>()
                 }
-                .padding()
+
+                ExampleEntry(title: "Break Glass Transition", icon: "hammer.fill") {
+                    SimpleController<BreakGlassTransitionController>()
+                }
+
+                ExampleEntry(title: "Shimmer Grid Points", icon: "star.square.fill") {
+                    ShimmerGridPointsPanel()
+                }
             }
             .navigationTitle("UIEffectKit")
         }

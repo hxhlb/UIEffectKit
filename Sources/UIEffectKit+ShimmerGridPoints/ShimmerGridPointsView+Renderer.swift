@@ -24,6 +24,7 @@ extension ShimmerGridPointsView {
             var hoverRadius: Float
             var hoverBoost: Float
         }
+
         struct GridPoint {
             var origin: simd_float2
             var jitter: simd_float2
@@ -119,18 +120,18 @@ extension ShimmerGridPointsView {
             if let p = pos { uniforms.hoverPos = p } else { uniforms.hoverPos = .init(-1e6, -1e6) }
         }
 
-        private func detectEDR(device: MTLDevice) {
+        private func detectEDR(device _: MTLDevice) {
             #if canImport(UIKit)
-            if #available(iOS 16.0, *) {
-                // Prefer wide color/EDR if available; MTKView sets output format but we keep pipeline in sync
-                supportsEDR = true
-                preferredPixelFormat = .rgba16Float
-            }
+                if #available(iOS 16.0, *) {
+                    // Prefer wide color/EDR if available; MTKView sets output format but we keep pipeline in sync
+                    supportsEDR = true
+                    preferredPixelFormat = .rgba16Float
+                }
             #elseif canImport(AppKit)
-            if #available(macOS 12.0, *) {
-                supportsEDR = true
-                preferredPixelFormat = .rgba16Float
-            }
+                if #available(macOS 12.0, *) {
+                    supportsEDR = true
+                    preferredPixelFormat = .rgba16Float
+                }
             #endif
         }
 
@@ -190,11 +191,10 @@ extension ShimmerGridPointsView {
                     let y = startY + Float(r) * spacing
 
                     // Alternate shape types to add visual variety, but still ordered
-                    var type: Float
-                    switch uniforms.shapeMode {
-                    case 1: type = 0 // circles
-                    case 2: type = 1 // diamonds
-                    default: type = ((r + c) % 2 == 0) ? 0 : 1 // mixed
+                    var type: Float = switch uniforms.shapeMode {
+                    case 1: 0 // circles
+                    case 2: 1 // diamonds
+                    default: ((r + c) % 2 == 0) ? 0 : 1 // mixed
                     }
 
                     // Radius within configurable range
