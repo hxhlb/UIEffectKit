@@ -1,5 +1,5 @@
 //
-//  SweepTransitionView.swift
+//  SweepBandContainerView.swift
 //  UIEffectKit
 //
 
@@ -12,15 +12,17 @@ import UIEffectKitBase
     import AppKit
 #endif
 
-public final class SweepTransitionView: EffectKitView {
+/// Hosts arbitrary content and reveals it through a traveling, feathered mask band.
+/// Pair it with shimmer effects for glint-style highlights or use it alone for entry/exit wipes.
+public final class SweepBandContainerView: EffectKitView {
     public struct Configuration: Equatable {
         /// Leading edge of the visible band along the sweep axis (0 = start, 1 = end).
         public var entryFraction: CGFloat
-        /// Trailing edge of the visible band along the sweep axis.
+        /// Trailing edge of the visible band along the sweep axis (0 = start, 1 = end).
         public var leavingFraction: CGFloat
-        /// Normalized width of the feather applied to both edges (0–0.5).
+        /// Normalized width of the feather applied to both band edges (0–0.5).
         public var featherFraction: CGFloat
-        /// Direction of the sweep in degrees. 0° is left-to-right, 90° is bottom-to-top.
+        /// Direction of travel in degrees. 0° sweeps left-to-right, 90° bottom-to-top.
         public var directionAngle: CGFloat
 
         public init(
@@ -38,10 +40,7 @@ public final class SweepTransitionView: EffectKitView {
 
     public var configuration: Configuration {
         get { storedConfiguration }
-        set {
-            storedConfiguration = newValue
-            applyConfiguration(animated: false)
-        }
+        set { performConfigurationUpdate(newValue, animated: false, duration: 0, timingFunction: nil) }
     }
 
     #if canImport(UIKit)
@@ -53,6 +52,8 @@ public final class SweepTransitionView: EffectKitView {
     private let gradientMask = CAGradientLayer()
     private var storedConfiguration = Configuration()
     private var pendingAnimationContext: AnimationContext?
+
+    // MARK: - Lifecycle
 
     #if canImport(UIKit)
         override public init(frame: CGRect) {
@@ -67,6 +68,7 @@ public final class SweepTransitionView: EffectKitView {
             super.layoutSubviews()
             gradientMask.frame = bounds
         }
+
     #elseif canImport(AppKit)
         override public init(frame frameRect: NSRect) {
             super.init(frame: frameRect)
@@ -82,7 +84,9 @@ public final class SweepTransitionView: EffectKitView {
         }
     #endif
 
-    /// Update the entry/leaving values with optional implicit animation.
+    // MARK: - Configuration Updates
+
+    /// Update the entry/leaving band fractions with optional implicit animation.
     public func setEntryFraction(
         _ entryFraction: CGFloat,
         leavingFraction: CGFloat? = nil,
@@ -96,12 +100,14 @@ public final class SweepTransitionView: EffectKitView {
         performConfigurationUpdate(next, animated: animated, duration: duration, timingFunction: timingFunction)
     }
 
+    /// Update the sweep direction in degrees.
     public func setDirectionAngle(_ angle: CGFloat, animated: Bool = false, duration: CFTimeInterval = 0.35) {
         var next = storedConfiguration
         next.directionAngle = angle
         performConfigurationUpdate(next, animated: animated, duration: duration, timingFunction: nil)
     }
 
+    /// Update the feather width (0–0.5) applied symmetrically to both edges.
     public func setFeatherFraction(_ feather: CGFloat, animated: Bool = false, duration: CFTimeInterval = 0.35) {
         var next = storedConfiguration
         next.featherFraction = feather
@@ -114,14 +120,16 @@ public final class SweepTransitionView: EffectKitView {
         duration: CFTimeInterval,
         timingFunction: CAMediaTimingFunction?
     ) {
+        storedConfiguration = newValue
         if animated {
             pendingAnimationContext = .init(duration: duration, timingFunction: timingFunction)
         } else {
             pendingAnimationContext = nil
         }
-        storedConfiguration = newValue
         applyConfiguration(animated: animated)
     }
+
+    // MARK: - Setup
 
     private func commonInit() {
         #if canImport(UIKit)
@@ -167,37 +175,21 @@ public final class SweepTransitionView: EffectKitView {
         #endif
     }
 
-    private func applyConfiguration(animated: Bool) {
-        let config = storedConfiguration
-        let entry = config.entryFraction.clamped(to: 0 ... 1)
-        let leaving = config.leavingFraction.clamped(to: 0 ... 1)
-        let lower = min(entry, leaving)
-        let upper = max(entry, leaving)
-        let span = max(upper - lower, 0.0001)
-        let maxFeather = span / 2
-        let requestedFeather = config.featherFraction.clamped(to: 0 ... 0.5)
-        let feather = min(maxFeather, requestedFeather)
-        let lowerEdgeEnd = min(lower + feather, upper)
-        let upperEdgeStart = max(upper - feather, lowerEdgeEnd)
+    // MARK: - Mask Application
 
+    private func applyConfiguration(animated: Bool) {
+        let parameters = sanitizedParameters(from: storedConfiguration)
         let stops = [
             CGFloat(0),
-            lower,
-            lowerEdgeEnd,
-            upperEdgeStart,
-            upper,
+            parameters.lower,
+            parameters.lowerFeatherEnd,
+            parameters.upperFeatherStart,
+            parameters.upper,
             CGFloat(1),
         ]
-        let colors: [CGColor] = [
-            maskColor(0),
-            maskColor(0),
-            maskColor(1),
-            maskColor(1),
-            maskColor(0),
-            maskColor(0),
-        ]
-
-        let points = Self.gradientPoints(for: config.directionAngle)
+        let alphas: [CGFloat] = [0, 0, 1, 1, 0, 0]
+        let colors = alphas.map { maskColor(alpha: $0) }
+        let points = Self.gradientPoints(for: parameters.directionAngle)
 
         CATransaction.begin()
         if animated, let context = pendingAnimationContext {
@@ -213,8 +205,28 @@ public final class SweepTransitionView: EffectKitView {
         gradientMask.colors = colors
         gradientMask.startPoint = points.start
         gradientMask.endPoint = points.end
+
         CATransaction.commit()
         pendingAnimationContext = nil
+    }
+
+    private func sanitizedParameters(from config: Configuration) -> BandParameters {
+        let entry = config.entryFraction.clamped(to: 0 ... 1)
+        let leaving = config.leavingFraction.clamped(to: 0 ... 1)
+        let lower = min(entry, leaving)
+        let upper = max(entry, leaving)
+        let span = max(upper - lower, 0.0001)
+        let requestedFeather = config.featherFraction.clamped(to: 0 ... 0.5)
+        let feather = min(span / 2, requestedFeather)
+        let lowerFeatherEnd = min(lower + feather, upper)
+        let upperFeatherStart = max(upper - feather, lowerFeatherEnd)
+        return BandParameters(
+            lower: lower,
+            upper: upper,
+            lowerFeatherEnd: lowerFeatherEnd,
+            upperFeatherStart: upperFeatherStart,
+            directionAngle: config.directionAngle
+        )
     }
 
     private static func gradientPoints(for angle: CGFloat) -> (start: CGPoint, end: CGPoint) {
@@ -226,19 +238,27 @@ public final class SweepTransitionView: EffectKitView {
         return (start, end)
     }
 
-    private func maskColor(_ value: CGFloat) -> CGColor {
+    private func maskColor(alpha: CGFloat) -> CGColor {
         #if canImport(UIKit)
-            return UIColor(white: value, alpha: 1).cgColor
+            return UIColor(white: 1, alpha: alpha).cgColor
         #else
-            return NSColor(white: value, alpha: 1).cgColor
+            return NSColor(white: 1, alpha: alpha).cgColor
         #endif
     }
 }
 
-private extension SweepTransitionView {
+private extension SweepBandContainerView {
     struct AnimationContext {
         let duration: CFTimeInterval
         let timingFunction: CAMediaTimingFunction?
+    }
+
+    struct BandParameters {
+        let lower: CGFloat
+        let upper: CGFloat
+        let lowerFeatherEnd: CGFloat
+        let upperFeatherStart: CGFloat
+        let directionAngle: CGFloat
     }
 }
 
@@ -247,3 +267,6 @@ private extension Comparable {
         min(max(self, range.lowerBound), range.upperBound)
     }
 }
+
+/// Backwards compatibility for earlier naming.
+public typealias SweepTransitionView = SweepBandContainerView

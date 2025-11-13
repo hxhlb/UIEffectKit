@@ -23,8 +23,8 @@ struct ContentView: View {
                     ShimmerGridPointsPanel()
                 }
 
-                ExampleEntry(title: "Sweep Transition", icon: "rectangle.lefthalf.inset.filled.arrow.left") {
-                    SweepTransitionPanel()
+                ExampleEntry(title: "Sweep Band Container", icon: "rectangle.lefthalf.inset.filled.arrow.left") {
+                    SweepBandContainerPanel()
                 }
             }
             .navigationTitle("UIEffectKit")

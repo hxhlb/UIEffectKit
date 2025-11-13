@@ -83,6 +83,15 @@ public final class ShimmerGridPointsView: MetalHostView {
         }
     }
 
+    /// Convenience helper to update only the wave angle (degrees) and propagate to the renderer.
+    @MainActor
+    public func setWaveAngle(_ angle: Float) {
+        guard configuration.waveAngle != angle else { return }
+        var next = configuration
+        next.waveAngle = angle
+        configuration = next
+    }
+
     @MainActor
     public func setHover(pointInView: CGPoint?) {
         guard let metalView else {

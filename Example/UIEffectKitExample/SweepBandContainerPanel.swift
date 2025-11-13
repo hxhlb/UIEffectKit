@@ -1,28 +1,29 @@
 //
-//  SweepTransitionPanel.swift
+//  SweepBandContainerPanel.swift
 //  UIEffectKitExample
 //
 
+import ColorfulX
 import SwiftUI
 import UIEffectKit
-import ColorfulX
 #if canImport(UIKit)
     import UIKit
 #elseif canImport(AppKit)
     import AppKit
 #endif
 
-struct SweepTransitionPanel: View {
+struct SweepBandContainerPanel: View {
     @State private var entryFraction: Double = 0.7
     @State private var leavingFraction: Double = 0.25
     @State private var featherFraction: Double = 0.08
     @State private var directionAngle: Double = 90
     @State private var shimmerHue: Double = 210
+    @State private var shimmerWaveAngle: Double = 45
 
     var body: some View {
         HStack(spacing: 16) {
             ZStack {
-                ColorfulView(color: .sunsetGlory)
+                ColorfulView(color: .sunset)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 sweepPreview
                     .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -39,6 +40,7 @@ struct SweepTransitionPanel: View {
                     slider("Leaving", value: $leavingFraction, range: 0 ... 1, step: 0.01)
                     slider("Feather", value: $featherFraction, range: 0 ... 0.3, step: 0.005)
                     slider("Direction (deg)", value: $directionAngle, range: 0 ... 360, step: 1)
+                    slider("Shimmer Wave Angle", value: $shimmerWaveAngle, range: 0 ... 360, step: 1)
                     slider("Shimmer Hue", value: $shimmerHue, range: 0 ... 360, step: 1)
                     Text("Tip: Keep entry ≥ leaving for a traveling reveal; animate them over time for sweeping transitions.")
                         .font(.footnote)
@@ -50,14 +52,16 @@ struct SweepTransitionPanel: View {
     }
 
     private var sweepPreview: some View {
-        EffectKitViewRepresentable<SweepTransitionView>(make: {
-            let view = SweepTransitionView(frame: .zero)
-            view.layer.cornerRadius = 20
-            view.layer.masksToBounds = true
+        EffectKitViewRepresentable<SweepBandContainerView>(make: {
+            let view = SweepBandContainerView(frame: .zero)
             #if canImport(UIKit)
+                view.layer.cornerRadius = 20
+                view.layer.masksToBounds = true
                 view.contentView.layer.cornerRadius = 20
                 view.contentView.clipsToBounds = true
             #elseif canImport(AppKit)
+                view.layer?.cornerRadius = 20
+                view.layer?.masksToBounds = true
                 view.contentView.wantsLayer = true
                 view.contentView.layer?.cornerRadius = 20
                 view.contentView.layer?.masksToBounds = true
@@ -65,7 +69,7 @@ struct SweepTransitionPanel: View {
             Self.installShimmer(in: view)
             return view
         }, update: { view in
-            var cfg = SweepTransitionView.Configuration()
+            var cfg = SweepBandContainerView.Configuration()
             cfg.entryFraction = CGFloat(entryFraction)
             cfg.leavingFraction = CGFloat(leavingFraction)
             cfg.featherFraction = CGFloat(featherFraction)
@@ -76,7 +80,7 @@ struct SweepTransitionPanel: View {
                 let color = Color(hue: shimmerHue / 360, saturation: 0.12, brightness: 1.0)
                 let rgb = Self.colorComponents(from: color)
                 shimmerConfig.baseColor = .init(Float(rgb.r), Float(rgb.g), Float(rgb.b))
-                shimmerConfig.waveAngle = Float(directionAngle)
+                shimmerConfig.waveAngle = Float(shimmerWaveAngle)
                 shimmerConfig.waveSpeed = 1.6
                 shimmerConfig.waveStrength = 1.2
                 shimmerConfig.enableEDR = false
@@ -94,14 +98,14 @@ struct SweepTransitionPanel: View {
     }
 
     private func formatted(_ value: Double) -> String {
-        if value >= 0 && value <= 1 {
-            return String(format: "%.2f", value)
+        if value >= 0, value <= 1 {
+            String(format: "%.2f", value)
         } else {
-            return String(format: "%.0f", value)
+            String(format: "%.0f", value)
         }
     }
 
-    private static func installShimmer(in sweep: SweepTransitionView) {
+    private static func installShimmer(in sweep: SweepBandContainerView) {
         guard findShimmer(in: sweep) == nil else { return }
         let shimmer = ShimmerGridPointsView(frame: .zero)
         shimmer.translatesAutoresizingMaskIntoConstraints = false
@@ -122,7 +126,7 @@ struct SweepTransitionPanel: View {
         shimmer.configuration.hoverRadius = 0
     }
 
-    private static func findShimmer(in sweep: SweepTransitionView) -> ShimmerGridPointsView? {
+    private static func findShimmer(in sweep: SweepBandContainerView) -> ShimmerGridPointsView? {
         #if canImport(UIKit)
             return sweep.contentView.subviews.compactMap { $0 as? ShimmerGridPointsView }.first
         #elseif canImport(AppKit)
