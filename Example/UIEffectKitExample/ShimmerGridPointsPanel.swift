@@ -18,6 +18,7 @@ struct ShimmerGridPointsPanel: View {
     @State private var baseHue: Double = 220
     @State private var waveSpeed: Double = 1.1
     @State private var waveStrength: Double = 0.8
+    @State private var waveAngle: Double = 45
     @State private var blurMin: Double = 0.08
     @State private var blurMax: Double = 0.25
     @State private var intensityMin: Double = 0.6
@@ -52,6 +53,7 @@ struct ShimmerGridPointsPanel: View {
                     slider("Hue", value: $baseHue, range: 0 ... 360)
                     slider("Wave Speed", value: $waveSpeed, range: 0 ... 4)
                     slider("Wave Strength", value: $waveStrength, range: 0 ... 2)
+                    slider("Wave Angle", value: $waveAngle, range: 0 ... 360, step: 1)
                     range("Blur", min: $blurMin, max: $blurMax, bounds: 0 ... 0.8, step: 0.01)
                     range("Intensity", min: $intensityMin, max: $intensityMax, bounds: 0 ... 1, step: 0.01)
                     range("Radius", min: $radiusMin, max: $radiusMax, bounds: 2 ... 24, step: 0.5)
@@ -85,6 +87,7 @@ struct ShimmerGridPointsPanel: View {
             cfg.baseColor = .init(Float(rgb.r), Float(rgb.g), Float(rgb.b))
             cfg.waveSpeed = Float(waveSpeed)
             cfg.waveStrength = Float(waveStrength)
+            cfg.waveAngle = Float(waveAngle)
             // Normalize ranges to avoid invalid ClosedRange construction
             let bLo = min(blurMin, blurMax), bHi = max(blurMin, blurMax)
             let iLo = min(intensityMin, intensityMax), iHi = max(intensityMin, intensityMax)

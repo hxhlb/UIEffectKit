@@ -22,6 +22,10 @@ struct ContentView: View {
                 ExampleEntry(title: "Shimmer Grid Points", icon: "star.square.fill") {
                     ShimmerGridPointsPanel()
                 }
+
+                ExampleEntry(title: "Sweep Transition", icon: "rectangle.lefthalf.inset.filled.arrow.left") {
+                    SweepTransitionPanel()
+                }
             }
             .navigationTitle("UIEffectKit")
         }

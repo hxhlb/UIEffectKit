@@ -22,6 +22,7 @@ struct Uniforms {
     float3 baseColor;
     float waveSpeed;
     float waveStrength;
+    float2 waveAxis;
     float blurMin;
     float blurMax;
     float intensityMin;
@@ -55,7 +56,7 @@ vertex VertexOut SGP_Vertex(const device VertexIn *vertices [[buffer(0)]],
     float blur = clamp(p.size.y, U.blurMin, U.blurMax);
 
     // Global wave to create ordered rhythm; traveling wave along grid
-    float phase = p.wave.x + p.wave.y;
+    float phase = p.wave.x * U.waveAxis.y + p.wave.y * U.waveAxis.x;
     float wave = 0.5 + 0.5 * sin(U.waveSpeed * U.time + phase);
     float radius = baseRadius * mix(1.0 - 0.15 * U.waveStrength, 1.0 + 0.15 * U.waveStrength, wave);
     // Blur is also modulated by wave strength

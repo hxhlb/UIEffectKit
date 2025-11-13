@@ -14,6 +14,7 @@ extension ShimmerGridPointsView {
             var baseColor: simd_float3
             var waveSpeed: Float
             var waveStrength: Float
+            var waveAxis: simd_float2
             var blurMin: Float
             var blurMax: Float
             var intensityMin: Float
@@ -50,6 +51,7 @@ extension ShimmerGridPointsView {
             baseColor: .init(0.95, 0.96, 1.0),
             waveSpeed: 1.1,
             waveStrength: 0.8,
+            waveAxis: .init(0.7071, 0.7071),
             blurMin: 0.08,
             blurMax: 0.25,
             intensityMin: 0.6,
@@ -91,6 +93,14 @@ extension ShimmerGridPointsView {
             uniforms.baseColor = config.baseColor
             uniforms.waveSpeed = config.waveSpeed
             uniforms.waveStrength = config.waveStrength
+            let radians = config.waveAngle * Float.pi / 180
+            var axis = simd_float2(cos(radians), sin(radians))
+            if simd_length_squared(axis) < 1e-4 {
+                axis = .init(1, 0)
+            } else {
+                axis = simd_normalize(axis)
+            }
+            uniforms.waveAxis = axis
             uniforms.blurMin = config.blurRange.lowerBound
             uniforms.blurMax = config.blurRange.upperBound
             uniforms.intensityMin = config.intensityRange.lowerBound

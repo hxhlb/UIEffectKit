@@ -15,6 +15,7 @@ var effectTargets: [Target] = [
     .target(name: "UIEffectKit+ShimmerGridPoints", resources: [
         .process("Resources/shimmer_grid_points.metal"),
     ]),
+    .target(name: "UIEffectKit+SweepTransition"),
 ]
 for target in effectTargets {
     target.dependencies.append(.init(stringLiteral: baseTarget.name))

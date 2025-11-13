@@ -7,7 +7,7 @@ What’s inside
 - MetalHostView: A reusable base view that owns an `MTKView` and centralizes Metal setup, layout, device, and scale handling.
 - ExtendingArea: Simple API to render beyond bounds for effects like glass shards or particle trails.
 - Helpers: Blended pipeline + sampler helpers, platform snapshot shortcuts.
-- Effects: Break Glass Transition, Particle Explode, Shimmer Grid Points.
+- Effects: Break Glass Transition, Particle Explode, Shimmer Grid Points, Sweep Transition band masking.
 - SwiftUI: Declarative embedding via `EffectContainer`, and removal transitions/modifiers.
 
 Key Types
@@ -24,6 +24,9 @@ Key Types
   - `MetalHostView.apply(config:)` to configure in one call
 - `MetalHelpers` (Sources/UIEffectKitBase/MetalHelpers.swift):
   - `blendedPipelineDescriptor(...)`, `makeLinearClampSampler(...)`
+- `SweepTransitionView` (Sources/UIEffectKit+SweepTransition/SweepTransitionView.swift):
+  - Hosts arbitrary content with a gradient mask controlled by `entryFraction`, `leavingFraction`, `featherFraction`, and `directionAngle`.
+  - `setEntryFraction(_:leavingFraction:animated:duration:)` animates sweeps for reveal/hide transitions and pairs well with shimmer highlights.
 - Snapshot Helpers (Sources/UIEffectKitBase/PlatformView.swift):
   - `UIView.makeSnapshotCGImage()` and `NSView.makeSnapshotCGImage()`
 
@@ -49,10 +52,10 @@ Examples
 - Example/UIEffectKitExample shows:
   - UIKit controllers for Break Glass and Particle Explode
   - SwiftUI demos using `.transition(.breakGlassTransition)` and `.transition(.explodeTransition)`
-  - Shimmer grid effect embedded via `EffectContainer`
+  - Shimmer grid effect embedded via `EffectContainer` with adjustable wave angle
+  - Sweep Transition panel masking a shimmer view with entry/leaving, feather, and direction controls
 
 Notes and Style
 - Follows Swift Code Style in AGENTS.md: 4-space indent, early returns, value types for configuration.
 - Avoids protocol-oriented overuse; favors composition + helpers.
 - Debug uses `assert()` for invariants; runtime failures call `fatalError` where setup is impossible.
-

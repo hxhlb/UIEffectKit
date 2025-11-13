@@ -31,6 +31,8 @@ public final class ShimmerGridPointsView: MetalHostView {
         public var baseColor: SIMD3<Float> = .init(0.95, 0.96, 1.0)
         public var waveSpeed: Float = 1.1
         public var waveStrength: Float = 0.8
+        /// Angle of the traveling shimmer wave in degrees, where 0° is left-to-right and 90° is bottom-to-top.
+        public var waveAngle: Float = 45
         public var blurRange: ClosedRange<Float> = 0.08 ... 0.25
         public var intensityRange: ClosedRange<Float> = 0.6 ... 0.95
         public var shapeMode: ShapeMode = .mixed
