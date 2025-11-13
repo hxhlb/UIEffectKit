@@ -49,9 +49,9 @@ import UIEffectKitBase
 
         private func startParticleAnimation(_ particleView: ParticleView, cgImage: CGImage, frameInSuperview: CGRect) {
             // Defer to next runloop to avoid interfering with current layout pass.
-            DispatchQueue.main.async {
-                particleView.beginWith(cgImage, targetFrame: frameInSuperview, onComplete: {
-                    particleView.removeFromSuperview()
+            DispatchQueue.main.async { [weak particleView] in
+                particleView?.beginWith(cgImage, targetFrame: frameInSuperview, onComplete: {
+                    particleView?.removeFromSuperview()
                 }, onFirstFrameRendered: { [weak self] in
                     DispatchQueue.main.async { self?.removeFromSuperview() }
                 })
@@ -98,9 +98,9 @@ import UIEffectKitBase
 
         private func startParticleAnimation(_ particleView: ParticleView, cgImage: CGImage, frameInSuperview: CGRect) {
             // Defer to next runloop to avoid layout recursion warnings from SwiftUI.
-            DispatchQueue.main.async {
-                particleView.beginWith(cgImage, targetFrame: frameInSuperview, onComplete: {
-                    particleView.removeFromSuperview()
+            DispatchQueue.main.async { [weak particleView] in
+                particleView?.beginWith(cgImage, targetFrame: frameInSuperview, onComplete: {
+                    particleView?.removeFromSuperview()
                 }, onFirstFrameRendered: { [weak self] in
                     self?.removeFromSuperview()
                 })

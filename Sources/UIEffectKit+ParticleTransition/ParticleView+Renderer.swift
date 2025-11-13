@@ -113,10 +113,11 @@ extension ParticleView {
             updateParticles()
 
             if checkAllParticlesDead() {
+                let completion = onComplete
+                onComplete = nil
                 DispatchQueue.main.async { [weak self] in
-                    guard let self else { return }
-                    cleanupResources()
-                    onComplete?()
+                    self?.cleanupResources()
+                    completion?()
                 }
                 return
             }
@@ -125,15 +126,18 @@ extension ParticleView {
 
             if !hasRenderedFirstFrame {
                 hasRenderedFirstFrame = true
-                DispatchQueue.main.async { [weak self] in
-                    self?.onFirstFrameRendered?()
+                let firstFrameHandler = onFirstFrameRendered
+                onFirstFrameRendered = nil
+                DispatchQueue.main.async {
+                    firstFrameHandler?()
                 }
             }
         }
 
         private func updateParticles() {
+            guard particleCount > 0 else { return }
             let maxThreadsPerThreadgroup = computePipeline.maxTotalThreadsPerThreadgroup
-            let threadgroupSize = min(maxThreadsPerThreadgroup, 2048)
+            let threadgroupSize = max(1, min(maxThreadsPerThreadgroup, 2048))
             let threadgroupCount = (particleCount + threadgroupSize - 1) / threadgroupSize
 
             let computeCommandBuffer = commandQueue.makeCommandBuffer()!
@@ -141,6 +145,12 @@ extension ParticleView {
             let computeCommandEncoder = computeCommandBuffer.makeComputeCommandEncoder()!
             computeCommandEncoder.setComputePipelineState(computePipeline)
             computeCommandEncoder.setBuffer(particleBuffer, offset: 0, index: 0)
+            var particleCountUInt32 = UInt32(particleCount)
+            computeCommandEncoder.setBytes(
+                &particleCountUInt32,
+                length: MemoryLayout<UInt32>.stride,
+                index: 1
+            )
             computeCommandEncoder.dispatchThreadgroups(
                 .init(width: threadgroupCount, height: 1, depth: 1),
                 threadsPerThreadgroup: .init(width: threadgroupSize, height: 1, depth: 1)
